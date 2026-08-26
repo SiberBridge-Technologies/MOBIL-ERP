@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "ERP-APP Çalışan",
+    "slug": "erp-app-calisan",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "platforms": ["android"],
+    "android": {
+      "package": "com.siberbridge.erpapp",
+      "adaptiveIcon": {
+        "backgroundColor": "#1E3A5F"
+      }
+    },
+    "extra": {
+      "apiBaseUrl": "https://SIZIN-DOMAININIZ.com/api"
+    }
+  }
+}
