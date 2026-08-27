@@ -12,6 +12,23 @@
 4. Tüm `backend/` klasörünü hosting'e (örn. `public_html/erp`) yükleyin.
 5. HTTPS zorunlu olmalı — cPanel üzerinden ücretsiz Let's Encrypt sertifikası aktif edin.
 
+## Yönetim Paneli (admin/)
+
+Tarayıcı üzerinden `admin/login.php` adresine gidilerek giriş yapılır (session tabanlı,
+API'nin token sisteminden ayrıdır). Sayfalar:
+
+| Sayfa | Açıklama | Yetki |
+|---|---|---|
+| login.php / logout.php | Giriş / çıkış | Açık |
+| index.php | Genel Bakış (istatistikler, son siparişler, düşük stok) | ADMIN/YONETICI |
+| products.php, product-add.php, product-edit.php | Ürün yönetimi | ADMIN/YONETICI |
+| customers.php, customer-add.php, customer-detail.php | Cari yönetimi + çalışan atama | ADMIN/YONETICI |
+| orders.php, order-detail.php | Sipariş listesi + durum güncelleme (ONAYLANDI'da stok düşer) | ADMIN/YONETICI |
+| employees.php, employee-add.php, employee-detail.php | Çalışan yönetimi, şifre resetleme, cari atama | Sadece ADMIN |
+| settings.php | Kendi şifresini değiştirme | Herkes |
+
+`config/.htaccess` ve `includes/.htaccess` bu klasörlere doğrudan tarayıcı erişimini engeller.
+
 ## API Uç Noktaları
 
 | Metod | Endpoint | Açıklama | Yetki |

@@ -46,3 +46,18 @@ export async function createOrder(payload: CreateOrderPayload): Promise<CreateOr
     body: payload,
   });
 }
+
+export interface MyOrder {
+  id: number;
+  siparis_no: string;
+  firma_adi: string;
+  genel_toplam: number;
+  durum: string;
+  olusturulma_tarihi: string;
+}
+
+/** Giriş yapmış çalışanın kendi siparişlerini listeler (yetki kontrolü sunucuda yapılır). */
+export async function getMyOrders(): Promise<MyOrder[]> {
+  const data = await apiRequest<{ data: MyOrder[] }>('/orders/list.php');
+  return data.data;
+}

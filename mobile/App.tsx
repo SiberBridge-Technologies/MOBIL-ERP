@@ -5,16 +5,16 @@ import { StatusBar } from 'expo-status-bar';
 
 import { CartProvider } from './services/CartContext';
 import LoginScreen from './app/LoginScreen';
-import CariAramaScreen from './app/CariAramaScreen';
+import MainTabs from './app/MainTabs';
 import CariSayfasiScreen from './app/CariSayfasiScreen';
 import UrunDetayScreen from './app/UrunDetayScreen';
 import SepetScreen from './app/SepetScreen';
 import SiparisFormuScreen from './app/SiparisFormuScreen';
 
-// Figma akışı: Login -> Cari Arama -> Cari Sayfası -> (Sepet <-> Ürün Detay) -> Sipariş Formu
+// Figma akışı: Login -> [Cariler/Siparişlerim/Profil sekmeleri] -> Cari Sayfası -> (Sepet <-> Ürün Detay) -> Sipariş Formu
 export type RootStackParamList = {
   Login: undefined;
-  CariArama: undefined;
+  MainTabs: undefined;
   CariSayfasi: { customerId: number };
   Sepet: undefined;
   UrunDetay: { productId: number };
@@ -33,7 +33,7 @@ export default function App() {
           screenOptions={{ headerShown: false }}
         >
           <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="CariArama" component={CariAramaScreen} />
+          <Stack.Screen name="MainTabs" component={MainTabs} />
           <Stack.Screen name="CariSayfasi" component={CariSayfasiScreen} />
           <Stack.Screen name="Sepet" component={SepetScreen} />
           <Stack.Screen name="UrunDetay" component={UrunDetayScreen} />

@@ -20,6 +20,7 @@ export async function login(kullaniciAdi: string, sifre: string): Promise<LoginR
     requiresAuth: false,
   });
   await saveToken(data.token);
+  await saveUser(data.user);
   return data;
 }
 
@@ -29,4 +30,17 @@ export async function logout(): Promise<void> {
   } finally {
     await clearToken();
   }
+}
+
+const USER_KEY = 'erp_current_user';
+
+export async function saveUser(user: LoginResponse['user']): Promise<void> {
+  const SecureStore = await import('expo-secure-store');
+  await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
+}
+
+export async function getSavedUser(): Promise<LoginResponse['user'] | null> {
+  const SecureStore = await import('expo-secure-store');
+  const raw = await SecureStore.getItemAsync(USER_KEY);
+  return raw ? JSON.parse(raw) : null;
 }

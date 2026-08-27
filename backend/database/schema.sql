@@ -1,9 +1,6 @@
 -- ERP-APP Veritabanı Şeması
 -- Karakter seti: utf8mb4 (Türkçe karakter desteği için)
 
-CREATE DATABASE IF NOT EXISTS erp_app CHARACTER SET utf8mb4 COLLATE utf8mb4_turkish_ci;
-USE erp_app;
-
 -- ==========================================================
 -- ÇALIŞANLAR (employees)
 -- ==========================================================

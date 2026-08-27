@@ -2,7 +2,7 @@ import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
 
 const API_BASE_URL: string =
-  (Constants.expoConfig?.extra?.apiBaseUrl as string) || 'https://SIZIN-DOMAININIZ.com/api';
+  (Constants.expoConfig?.extra?.apiBaseUrl as string) || 'https://sbrsystem.gt.tc/api';
 
 const TOKEN_KEY = 'erp_auth_token';
 

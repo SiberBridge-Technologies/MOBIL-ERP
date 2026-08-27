@@ -28,7 +28,7 @@ export default function LoginScreen({ navigation }: any) {
     setLoading(true);
     try {
       await login(kullaniciAdi, sifre);
-      navigation.replace('CariArama');
+      navigation.replace('MainTabs');
     } catch (e: any) {
       setError(e.message || 'Giriş başarısız.');
     } finally {

@@ -35,7 +35,7 @@ export default function SiparisFormuScreen({ navigation }: any) {
       });
       clearCart();
       Alert.alert('Sipariş Kaydedildi', `Sipariş No: ${result.siparis_no}`, [
-        { text: 'Tamam', onPress: () => navigation.navigate('CariArama') },
+        { text: 'Tamam', onPress: () => navigation.navigate('MainTabs') },
       ]);
     } catch (e: any) {
       Alert.alert('Hata', e.message || 'Sipariş kaydedilemedi.');
