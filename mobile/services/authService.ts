@@ -19,8 +19,23 @@ export async function login(kullaniciAdi: string, sifre: string): Promise<LoginR
     body: { kullanici_adi: kullaniciAdi, sifre },
     requiresAuth: false,
   });
+
+  // SecureStore yalnızca string kabul eder. Sunucudan beklenmedik bir yanıt
+  // gelirse (örn. token eksikse) burada anlaşılır bir hata fırlatıp
+  // uygulamanın çökmesini engelliyoruz.
+  if (!data || typeof data.token !== 'string' || data.token.length === 0) {
+    throw new Error(
+      'Sunucudan geçerli bir oturum anahtarı (token) alınamadı. Ham yanıt: ' +
+        JSON.stringify(data)
+    );
+  }
+
   await saveToken(data.token);
-  await saveUser(data.user);
+
+  if (data.user) {
+    await saveUser(data.user);
+  }
+
   return data;
 }
 
