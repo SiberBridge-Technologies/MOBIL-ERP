@@ -122,7 +122,7 @@ Kuruluma başlamadan önce bilgisayarınızda/hesabınızda şunlar olmalı:
    ```
 3. Kaydedin.
 
-### A.5 — İlk admin kullanıcıyı oluşturma (SQL bilmenize gerek yok)                   
+### A.5 — İlk admin kullanıcıyı oluşturma (SQL bilmenize gerek yok)
 
 1. Tarayıcıdan şu adrese gidin: `https://siteniz.com/erp/setup.php`
 2. Açılan formu doldurun: Ad, Soyad, Kullanıcı Adı, Şifre.
@@ -141,6 +141,35 @@ Kuruluma başlamadan önce bilgisayarınızda/hesabınızda şunlar olmalı:
 2. Domaininiz için ücretsiz SSL sertifikasını aktif edin.
 3. Sitenizin `https://` ile açıldığından emin olun (`http://` değil).
    Mobil uygulama sadece HTTPS ile çalışacak şekilde tasarlanmıştır.
+
+### A.6.5 — `.env` dosyasını oluşturma (veritabanı bilgileri artık burada)
+
+Backend, veritabanı şifresi gibi hassas bilgileri artık `config/database.php`
+dosyasının İÇİNDE değil, ayrı bir `.env` dosyasında tutar. Bu sayede farklı
+ortamlar (yerel bilgisayar, hosting) arasında geçerken kod dosyalarına
+dokunmanıza gerek kalmaz, sadece `.env`'i güncellersiniz.
+
+1. `config/.env.example` dosyasını `config/.env` olarak kopyalayın (paket
+   içinde zaten hazır bir `.env` dosyası da gelir, XAMPP için önceden
+   doldurulmuştur — gerçek hosting'e taşırken değerleri güncelleyin).
+2. `config/.env` dosyasını açıp kendi bilgilerinizi girin:
+
+   ```
+   DB_HOST=localhost
+   DB_NAME=erp_app
+   DB_USER=root
+   DB_PASS=
+   APP_DEBUG=false
+   ```
+
+3. `APP_DEBUG=true` yaparsanız PHP hataları ekranda görünür (sadece yerel
+   test için kullanın); `APP_DEBUG=false` canlı ortamda olması gereken
+   güvenli ayardır.
+4. `.env` dosyası zaten `config/` klasöründe olduğu için `.htaccess`
+   tarafından otomatik korunur — tarayıcıdan doğrudan açılamaz.
+
+> **Önemli:** `.env` dosyasını asla başkasıyla paylaşmayın veya herkese açık
+> bir yere (GitHub gibi) yüklemeyin — içinde veritabanı şifreniz var.
 
 ### A.7 — Test etme
 
@@ -163,18 +192,30 @@ oluşturduğunuz kullanıcı adı/şifre ile giriş yapabiliyorsanız backend ha
    npm install
    ```
 
-### B.2 — API adresini ayarlama
+### B.2 — API adresini ayarlama (artık `.env` ile)
 
-1. `mobile/app.json` dosyasını açın.
-2. `extra.apiBaseUrl` değerini backend'inizin **gerçek** adresiyle değiştirin:
+API adresi artık `app.json` içinde DEĞİL, `mobile/.env` dosyasında tutulur
+(backend'deki mantığın aynısı — Expo SDK 49+ `.env` dosyalarını otomatik
+olarak destekler, ekstra paket kurmaya gerek yoktur).
 
-   ```json
-   "extra": {
-     "apiBaseUrl": "https://siteniz.com/erp/api"
-   }
+1. `mobile/.env.example` dosyasını `mobile/.env` olarak kopyalayın (paket
+   içinde zaten hazır bir `.env` de gelir).
+2. İçindeki adresi kendi backend'inizle değiştirin:
+
+   ```
+   EXPO_PUBLIC_API_BASE_URL=http://192.168.1.34/erp/api
    ```
 
    > Dikkat: Sonunda `/api` olmalı, `/api/` değil (son slash olmadan).
+   > Değişken adı mutlaka `EXPO_PUBLIC_` ile başlamalı — Expo yalnızca bu
+   > önekle başlayan değişkenleri uygulamaya dahil eder.
+
+3. **Her `.env` değişikliğinden sonra** Expo sunucusunu mutlaka önbellek
+   temizleyerek yeniden başlatın, yoksa eski adres kullanılmaya devam eder:
+
+   ```bash
+   npx expo start -c
+   ```
 
 ### B.3 — Geliştirme modunda çalıştırma (test)
 

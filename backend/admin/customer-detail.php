@@ -75,7 +75,8 @@ $tumCalisanlar = $pdo->query(
     'SELECT id, ad, soyad FROM employees WHERE durum = "AKTIF" AND rol = "CALISAN" ORDER BY ad'
 )->fetchAll();
 
-$pageTitle = 'Cari Detay — ' . $customer['firma_adi'];
+$pageTitle = 'Cari Detay';
+$pageSubtitle = $customer['firma_adi'] . ' (' . $customer['cari_kodu'] . ')';
 $activePage = 'customers';
 require __DIR__ . '/../includes/admin_header.php';
 ?>
@@ -85,7 +86,7 @@ require __DIR__ . '/../includes/admin_header.php';
 
 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
     <div class="card">
-        <h3 style="margin-top:0;">Cari Bilgileri</h3>
+        <h3>Cari Bilgileri</h3>
         <form method="POST" action="customer-detail.php?id=<?= $id ?>">
             <div class="form-group">
                 <label>Firma Adı</label>
@@ -139,7 +140,7 @@ require __DIR__ . '/../includes/admin_header.php';
 
     <div>
         <div class="card">
-            <h3 style="margin-top:0;">Yetkili Çalışanlar</h3>
+            <h3>Yetkili Çalışanlar</h3>
             <?php foreach ($atananCalisanlar as $ac): ?>
             <form method="POST" action="customer-detail.php?id=<?= $id ?>" style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border);">
                 <span><?= e($ac['ad'] . ' ' . $ac['soyad']) ?></span>
@@ -148,7 +149,7 @@ require __DIR__ . '/../includes/admin_header.php';
             </form>
             <?php endforeach; ?>
             <?php if (empty($atananCalisanlar)): ?>
-            <p style="color:var(--text-muted); font-size:13px;">Bu cariye henüz çalışan atanmamış.</p>
+            <p style="color:var(--muted-foreground); font-size:13px;">Bu cariye henüz çalışan atanmamış.</p>
             <?php endif; ?>
 
             <form method="POST" action="customer-detail.php?id=<?= $id ?>" style="margin-top:16px; display:flex; gap:8px;">
@@ -162,7 +163,7 @@ require __DIR__ . '/../includes/admin_header.php';
         </div>
 
         <div class="card">
-            <h3 style="margin-top:0;">Siparişler</h3>
+            <h3>Siparişler</h3>
             <table>
                 <thead><tr><th>Sipariş No</th><th>Tutar</th><th>Durum</th><th>Tarih</th></tr></thead>
                 <tbody>
@@ -175,7 +176,7 @@ require __DIR__ . '/../includes/admin_header.php';
                     </tr>
                     <?php endforeach; ?>
                     <?php if (empty($siparisler)): ?>
-                    <tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Sipariş yok.</td></tr>
+                    <tr><td colspan="4" style="text-align:center; color:var(--muted-foreground);">Sipariş yok.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>

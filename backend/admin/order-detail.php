@@ -72,7 +72,11 @@ $itemsStmt = $pdo->prepare(
 $itemsStmt->execute(['id' => $id]);
 $items = $itemsStmt->fetchAll();
 
-$pageTitle = 'Sipariş Detay — ' . $order['siparis_no'];
+$durumEtiket = ['TASLAK' => 'Taslak', 'BEKLEMEDE' => 'Beklemede', 'ONAYLANDI' => 'Onaylandı', 'TAMAMLANDI' => 'Tamamlandı', 'IPTAL' => 'İptal'];
+$durumRenk = ['TASLAK' => 'pill-muted', 'BEKLEMEDE' => 'pill-warning', 'ONAYLANDI' => 'pill-success', 'TAMAMLANDI' => 'pill-success', 'IPTAL' => 'pill-danger'];
+
+$pageTitle = 'Sipariş Detay';
+$pageSubtitle = $order['siparis_no'] . ' — ' . $order['firma_adi'];
 $activePage = 'orders';
 require __DIR__ . '/../includes/admin_header.php';
 ?>
@@ -82,7 +86,7 @@ require __DIR__ . '/../includes/admin_header.php';
 
 <div style="display:grid; grid-template-columns: 2fr 1fr; gap:24px;">
     <div class="card">
-        <h3 style="margin-top:0;">Sipariş Kalemleri</h3>
+        <h3>Sipariş Kalemleri</h3>
         <table>
             <thead>
                 <tr><th>Ürün Kodu</th><th>Ürün Adı</th><th>Koli</th><th>Adet</th><th>Net Fiyat</th><th>Net Tutar</th></tr>
@@ -110,31 +114,31 @@ require __DIR__ . '/../includes/admin_header.php';
 
     <div>
         <div class="card">
-            <h3 style="margin-top:0;">Sipariş Bilgileri</h3>
+            <h3>Sipariş Bilgileri</h3>
             <p><strong>Cari:</strong> <?= e($order['firma_adi']) ?></p>
             <p><strong>Çalışan:</strong> <?= e($order['calisan_ad'] . ' ' . $order['calisan_soyad']) ?></p>
             <p><strong>Evrak Açıklaması:</strong> <?= e($order['evrak_aciklamasi']) ?: '-' ?></p>
             <p><strong>Teslim Tarihi:</strong> <?= formatTarih($order['teslim_tarihi']) ?></p>
             <p><strong>Ambar:</strong> <?= e($order['ambar_bilgisi']) ?: '-' ?></p>
-            <p><strong>Ödeme Tipi:</strong> <?= e($order['odeme_tipi']) ?></p>
+            <p><strong>Ödeme Tipi:</strong> <?= $order['odeme_tipi'] === 'NAKIT' ? 'Nakit' : 'Vadeli' ?><?= $order['odeme_tipi'] === 'VADELI' && $order['vade_gun'] ? ' (' . (int) $order['vade_gun'] . ' gün)' : '' ?></p>
             <p><strong>Oluşturulma:</strong> <?= formatTarih($order['olusturulma_tarihi']) ?></p>
         </div>
 
         <div class="card">
-            <h3 style="margin-top:0;">Durum Güncelle</h3>
-            <p>Mevcut durum: <span class="pill pill-warning"><?= e($order['durum']) ?></span></p>
+            <h3>Durum Güncelle</h3>
+            <p>Mevcut durum: <span class="pill <?= $durumRenk[$order['durum']] ?? 'pill-muted' ?>"><?= e($durumEtiket[$order['durum']] ?? $order['durum']) ?></span></p>
             <form method="POST" action="order-detail.php?id=<?= $id ?>">
                 <div class="form-group">
                     <select name="yeni_durum">
-                        <?php foreach (['TASLAK','BEKLEMEDE','ONAYLANDI','TAMAMLANDI','IPTAL'] as $d): ?>
-                        <option value="<?= $d ?>" <?= $order['durum'] === $d ? 'selected' : '' ?>><?= $d ?></option>
+                        <?php foreach ($durumEtiket as $d => $etiket): ?>
+                        <option value="<?= $d ?>" <?= $order['durum'] === $d ? 'selected' : '' ?>><?= e($etiket) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width:100%;">Durumu Güncelle</button>
             </form>
-            <p style="font-size:12px; color:var(--text-muted); margin-top:12px;">
-                Not: "ONAYLANDI" durumuna geçişte stok otomatik olarak düşer.
+            <p style="font-size:12px; color:var(--muted-foreground); margin-top:12px;">
+                Not: "Onaylandı" durumuna geçişte stok otomatik olarak düşer.
             </p>
         </div>
     </div>

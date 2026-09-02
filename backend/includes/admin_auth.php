@@ -4,6 +4,12 @@
  * burada PHP session kullanılır, çünkü tarayıcı üzerinden erişilir).
  */
 
+// Dosyada gizli BOM/boşluk olsa bile session_start()'ın "headers already sent"
+// hatası vermesini engellemek için en başta çıktı arabelleğe alınır.
+if (ob_get_level() === 0) {
+    ob_start();
+}
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }

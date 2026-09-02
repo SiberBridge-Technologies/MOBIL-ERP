@@ -46,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pageTitle = 'Yeni Ürün';
+$pageSubtitle = 'Ürün kataloğuna yeni bir kayıt ekleyin';
 $activePage = 'products';
 require __DIR__ . '/../includes/admin_header.php';
 ?>

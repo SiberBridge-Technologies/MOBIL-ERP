@@ -61,7 +61,8 @@ $atananCariler = $atananCariler->fetchAll();
 
 $tumCariler = $pdo->query('SELECT id, cari_kodu, firma_adi FROM customers WHERE durum = "AKTIF" ORDER BY firma_adi')->fetchAll();
 
-$pageTitle = 'Çalışan Detay — ' . $employee['ad'] . ' ' . $employee['soyad'];
+$pageTitle = 'Çalışan Detay';
+$pageSubtitle = $employee['ad'] . ' ' . $employee['soyad'] . ' (' . $employee['kullanici_adi'] . ')';
 $activePage = 'employees';
 require __DIR__ . '/../includes/admin_header.php';
 ?>
@@ -71,7 +72,7 @@ require __DIR__ . '/../includes/admin_header.php';
 
 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
     <div class="card">
-        <h3 style="margin-top:0;">Çalışan Bilgileri</h3>
+        <h3>Çalışan Bilgileri</h3>
         <form method="POST" action="employee-detail.php?id=<?= $id ?>">
             <div class="form-row">
                 <div class="form-group">
@@ -123,16 +124,16 @@ require __DIR__ . '/../includes/admin_header.php';
     </div>
 
     <div class="card">
-        <h3 style="margin-top:0;">Yetkili Olduğu Cariler</h3>
+        <h3>Yetkili Olduğu Cariler</h3>
         <?php foreach ($atananCariler as $ac): ?>
         <form method="POST" action="employee-detail.php?id=<?= $id ?>" style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border);">
-            <span><?= e($ac['firma_adi']) ?> <small style="color:var(--text-muted);">(<?= e($ac['cari_kodu']) ?>)</small></span>
+            <span><?= e($ac['firma_adi']) ?> <small style="color:var(--muted-foreground);">(<?= e($ac['cari_kodu']) ?>)</small></span>
             <input type="hidden" name="customer_id" value="<?= (int) $ac['id'] ?>">
             <button type="submit" name="cari_sil" class="btn btn-danger btn-sm">Kaldır</button>
         </form>
         <?php endforeach; ?>
         <?php if (empty($atananCariler)): ?>
-        <p style="color:var(--text-muted); font-size:13px;">Henüz cari atanmamış.</p>
+        <p style="color:var(--muted-foreground); font-size:13px;">Henüz cari atanmamış.</p>
         <?php endif; ?>
 
         <form method="POST" action="employee-detail.php?id=<?= $id ?>" style="margin-top:16px; display:flex; gap:8px;">

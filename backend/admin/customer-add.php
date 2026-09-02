@@ -41,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pageTitle = 'Yeni Cari';
+$pageSubtitle = 'Sisteme yeni bir cari (müşteri) kaydı ekleyin';
 $activePage = 'customers';
 require __DIR__ . '/../includes/admin_header.php';
 ?>

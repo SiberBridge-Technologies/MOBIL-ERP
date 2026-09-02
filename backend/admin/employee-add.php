@@ -37,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pageTitle = 'Yeni Çalışan';
+$pageSubtitle = 'Mobil uygulamayı kullanacak yeni bir çalışan ekleyin';
 $activePage = 'employees';
 require __DIR__ . '/../includes/admin_header.php';
 ?>

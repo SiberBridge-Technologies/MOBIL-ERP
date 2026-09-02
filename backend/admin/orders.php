@@ -20,23 +20,32 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $orders = $stmt->fetchAll();
 
+$toplamTutar = array_sum(array_column($orders, 'genel_toplam'));
 $durumlar = ['TASLAK', 'BEKLEMEDE', 'ONAYLANDI', 'TAMAMLANDI', 'IPTAL'];
+$durumEtiket = ['TASLAK' => 'Taslak', 'BEKLEMEDE' => 'Beklemede', 'ONAYLANDI' => 'Onaylandı', 'TAMAMLANDI' => 'Tamamlandı', 'IPTAL' => 'İptal'];
 
 $pageTitle = 'Siparişler';
 $activePage = 'orders';
 require __DIR__ . '/../includes/admin_header.php';
 ?>
 
+<div class="page-intro" style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:10px;">
+    <div>
+        <h2>Siparişler</h2>
+        <p><?= count($orders) ?> sipariş · Toplam <?= formatTL($toplamTutar) ?></p>
+    </div>
+</div>
+
 <div class="toolbar">
-    <div style="display:flex; gap:8px;">
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <a href="orders.php" class="btn <?= $durumFiltre === '' ? 'btn-primary' : 'btn-secondary' ?> btn-sm">Tümü</a>
         <?php foreach ($durumlar as $d): ?>
-        <a href="orders.php?durum=<?= $d ?>" class="btn <?= $durumFiltre === $d ? 'btn-primary' : 'btn-secondary' ?> btn-sm"><?= $d ?></a>
+        <a href="orders.php?durum=<?= $d ?>" class="btn <?= $durumFiltre === $d ? 'btn-primary' : 'btn-secondary' ?> btn-sm"><?= e($durumEtiket[$d]) ?></a>
         <?php endforeach; ?>
     </div>
 </div>
 
-<div class="card">
+<div class="card" style="padding:0;">
     <table>
         <thead>
             <tr>
@@ -56,13 +65,13 @@ require __DIR__ . '/../includes/admin_header.php';
                 <td><?= e($o['firma_adi']) ?></td>
                 <td><?= e($o['calisan_ad'] . ' ' . $o['calisan_soyad']) ?></td>
                 <td><?= formatTL((float) $o['genel_toplam']) ?></td>
-                <td><span class="pill <?= durumPillClass($o['durum']) ?>"><?= e($o['durum']) ?></span></td>
+                <td><span class="pill <?= durumPillClass($o['durum']) ?>"><?= e($durumEtiket[$o['durum']] ?? $o['durum']) ?></span></td>
                 <td><?= formatTarih($o['olusturulma_tarihi']) ?></td>
                 <td><a href="order-detail.php?id=<?= (int) $o['id'] ?>" class="btn btn-secondary btn-sm">Detay</a></td>
             </tr>
             <?php endforeach; ?>
             <?php if (empty($orders)): ?>
-            <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:32px;">Sipariş bulunamadı.</td></tr>
+            <tr><td colspan="7" style="text-align:center; color:var(--muted-foreground); padding:32px;">Sipariş bulunamadı.</td></tr>
             <?php endif; ?>
         </tbody>
     </table>

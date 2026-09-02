@@ -52,6 +52,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="login-page">
     <div class="login-box">
+        <div class="brand">
+            <div class="brand-logo">S</div>
+            <div class="brand-text">SIBERBRIDGE<span>ERP SYSTEM</span></div>
+        </div>
         <h1>Yönetim Paneli</h1>
         <p class="subtitle">Devam etmek için hesabınızla giriş yapın.</p>
 

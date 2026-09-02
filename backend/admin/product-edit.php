@@ -52,7 +52,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $success = true;
 }
 
-$pageTitle = 'Ürün Düzenle — ' . $product['urun_kodu'];
+$pageTitle = 'Ürün Düzenle';
+$pageSubtitle = $product['urun_kodu'] . ' — ' . $product['urun_adi'];
 $activePage = 'products';
 require __DIR__ . '/../includes/admin_header.php';
 ?>

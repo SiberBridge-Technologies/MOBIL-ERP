@@ -34,9 +34,14 @@ $activePage = 'categories';
 require __DIR__ . '/../includes/admin_header.php';
 ?>
 
-<div style="display:grid; grid-template-columns: 2fr 1fr; gap:24px;">
+<div class="page-intro">
+    <h2>Kategoriler</h2>
+    <p><?= count($categories) ?> kategori tanımlı</p>
+</div>
+
+<div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px;">
     <div class="card">
-        <h3 style="margin-top:0;">Kategori Listesi</h3>
+        <h3>Kategori Listesi</h3>
         <table>
             <thead><tr><th>Kategori</th><th>Üst Kategori</th><th>Ürün Sayısı</th><th></th></tr></thead>
             <tbody>
@@ -54,14 +59,14 @@ require __DIR__ . '/../includes/admin_header.php';
                 </tr>
                 <?php endforeach; ?>
                 <?php if (empty($categories)): ?>
-                <tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:24px;">Henüz kategori eklenmemiş.</td></tr>
+                <tr><td colspan="4" style="text-align:center; color:var(--muted-foreground); padding:24px;">Henüz kategori eklenmemiş.</td></tr>
                 <?php endif; ?>
             </tbody>
         </table>
     </div>
 
     <div class="card">
-        <h3 style="margin-top:0;">Yeni Kategori</h3>
+        <h3>Yeni Kategori</h3>
         <?php if ($error): ?><div class="alert alert-error"><?= e($error) ?></div><?php endif; ?>
         <form method="POST" action="categories.php">
             <div class="form-group">

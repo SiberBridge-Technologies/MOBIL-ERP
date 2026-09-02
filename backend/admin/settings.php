@@ -28,19 +28,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pageTitle = 'Ayarlar';
+$pageSubtitle = 'Hesap bilgilerinizi görüntüleyin ve şifrenizi güncelleyin';
 $activePage = 'settings';
 require __DIR__ . '/../includes/admin_header.php';
 ?>
 
 <div class="card" style="max-width:480px;">
-    <h3 style="margin-top:0;">Hesap Bilgileri</h3>
+    <h3>Hesap Bilgileri</h3>
     <p><strong>Ad Soyad:</strong> <?= e($me['ad'] . ' ' . $me['soyad']) ?></p>
     <p><strong>Kullanıcı Adı:</strong> <?= e($me['kullanici_adi']) ?></p>
     <p><strong>Rol:</strong> <?= e($me['rol']) ?></p>
 </div>
 
 <div class="card" style="max-width:480px;">
-    <h3 style="margin-top:0;">Şifre Değiştir</h3>
+    <h3>Şifre Değiştir</h3>
     <?php if ($success): ?><div class="alert alert-success"><?= e($success) ?></div><?php endif; ?>
     <?php if ($error): ?><div class="alert alert-error"><?= e($error) ?></div><?php endif; ?>
 

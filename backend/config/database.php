@@ -1,16 +1,14 @@
 <?php
 /**
- * Veritabanı bağlantısı
- * cPanel'de bu bilgileri kendi hosting bilgilerinizle değiştirin.
- * Bu dosya API veya admin klasörlerinin DIŞINDA tutulmalı, mümkünse
- * .env veya public_html dışı bir konumdan okunmalıdır.
+ * Veritabanı bağlantısı — bilgiler artık .env dosyasından okunur.
+ * Değerleri değiştirmek için bu dosyayı DEĞİL, config/.env dosyasını düzenleyin.
  */
 
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'erp_app');
-define('DB_USER', 'CPANEL_KULLANICI_ADI');
-define('DB_PASS', 'CPANEL_SIFRE');
-define('DB_CHARSET', 'utf8mb4');
+define('DB_HOST', env('DB_HOST', 'localhost'));
+define('DB_NAME', env('DB_NAME', 'erp_app'));
+define('DB_USER', env('DB_USER', 'root'));
+define('DB_PASS', env('DB_PASS', ''));
+define('DB_CHARSET', env('DB_CHARSET', 'utf8mb4'));
 
 function getDbConnection(): PDO
 {
@@ -29,7 +27,11 @@ function getDbConnection(): PDO
         } catch (PDOException $e) {
             http_response_code(500);
             header('Content-Type: application/json; charset=utf-8');
-            echo json_encode(['success' => false, 'message' => 'Veritabanı bağlantı hatası.']);
+            // APP_DEBUG açıksa gerçek hatayı göster (yerel test), kapalıysa gizle (canlı ortam)
+            $message = (defined('APP_DEBUG') && APP_DEBUG)
+                ? 'Veritabanı bağlantı hatası: ' . $e->getMessage()
+                : 'Veritabanı bağlantı hatası.';
+            echo json_encode(['success' => false, 'message' => $message]);
             exit;
         }
     }
