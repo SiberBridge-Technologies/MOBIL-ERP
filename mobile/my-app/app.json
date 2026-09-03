@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "ERP-APP Çalışan",
+    "slug": "erp-app-calisan",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "platforms": [
+      "android"
+    ],
+    "android": {
+      "package": "com.siberbridge.erpapp",
+      "adaptiveIcon": {
+        "backgroundColor": "#18181b"
+      }
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-status-bar",
+      "expo-sharing"
+    ]
+  }
+}
