@@ -2,10 +2,15 @@ import { apiRequest } from './api';
 
 export interface CartItem {
   product_id: number;
+
   urun_kodu: string;
   urun_adi: string;
+
   koli_adedi: number;
+
   koli_fiyati: number;
+  dip_fiyat: number;
+
   iskonto_1: number;
   iskonto_2: number;
   iskonto_3: number;
@@ -16,7 +21,6 @@ export interface CreateOrderPayload {
 
   evrak_aciklamasi?: string;
 
-  // Son Teslim Tarihi
   teslim_tarihi?: string;
 
   ambar_bilgisi?: string;

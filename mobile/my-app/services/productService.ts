@@ -6,8 +6,11 @@ export interface Product {
   urun_adi: string;
   aciklama: string | null;
   barkod: string | null;
+
   liste_fiyati: number;
   koli_fiyati: number;
+  dip_fiyat: number;
+
   koli_ici_adet: number;
   kdv_orani: number;
   hacim_m3: number;
@@ -16,14 +19,34 @@ export interface Product {
   gorsel_url: string | null;
 }
 
-export async function searchProducts(query: string): Promise<Product[]> {
+export async function getProducts(): Promise<Product[]> {
+  const data = await apiRequest<{ data: Product[] }>(
+    '/products/list.php'
+  );
+
+  return Array.isArray(data.data)
+    ? data.data
+    : [];
+}
+
+export async function searchProducts(
+  query: string
+): Promise<Product[]> {
   const data = await apiRequest<{ data: Product[] }>(
     `/products/list.php?q=${encodeURIComponent(query)}`
   );
-  return data.data;
+
+  return Array.isArray(data.data)
+    ? data.data
+    : [];
 }
 
-export async function getProduct(id: number): Promise<Product> {
-  const data = await apiRequest<{ data: Product }>(`/products/get.php?id=${id}`);
+export async function getProduct(
+  id: number
+): Promise<Product> {
+  const data = await apiRequest<{ data: Product }>(
+    `/products/get.php?id=${id}`
+  );
+
   return data.data;
 }

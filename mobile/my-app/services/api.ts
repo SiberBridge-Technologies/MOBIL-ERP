@@ -8,7 +8,11 @@ const TOKEN_KEY = 'erp_auth_token';
 
 export async function saveToken(token: string): Promise<void> {
   await SecureStore.setItemAsync(TOKEN_KEY, token);
-  console.log('🔐 Token kaydedildi:', token ? `VAR (${token.length} karakter)` : 'YOK');
+
+  console.log(
+    '🔐 Token kaydedildi:',
+    token ? `VAR (${token.length} karakter)` : 'YOK'
+  );
 }
 
 export async function getToken(): Promise<string | null> {
@@ -82,7 +86,6 @@ export async function apiRequest<T = any>(
   let response: Response;
 
   try {
-    console.log('📤 İstek Headerları:', JSON.stringify(headers));
     response = await fetch(url, {
       method,
       headers,
@@ -113,7 +116,7 @@ export async function apiRequest<T = any>(
   if (rawText.trim().length > 0) {
     try {
       data = JSON.parse(rawText);
-    } catch (error) {
+    } catch {
       console.error(
         '❌ JSON parse hatası:',
         rawText

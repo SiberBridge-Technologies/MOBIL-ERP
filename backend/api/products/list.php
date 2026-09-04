@@ -7,13 +7,10 @@ require_once __DIR__ . '/../../includes/auth.php';
 setJsonHeaders();
 
 try {
-    // Token kontrolü
     $currentUser = requireAuth();
 
-    // Veritabanı
     $pdo = getDbConnection();
 
-    // Parametreler
     $search = trim($_GET['q'] ?? '');
 
     $page = max(
@@ -28,10 +25,8 @@ try {
 
     $offset = ($page - 1) * $limit;
 
-    /*
-     * WHERE
-     */
     $where = 'WHERE aktif = 1';
+
     $countParams = [];
     $queryParams = [];
 
@@ -55,9 +50,6 @@ try {
         $queryParams[':search_barcode'] = $searchValue;
     }
 
-    /*
-     * Toplam kayıt
-     */
     $countSql = "
         SELECT COUNT(*)
         FROM products
@@ -78,9 +70,6 @@ try {
 
     $total = (int) $countStmt->fetchColumn();
 
-    /*
-     * Ürünler
-     */
     $sql = "
         SELECT
             id,
@@ -90,6 +79,7 @@ try {
             barkod,
             liste_fiyati,
             koli_fiyati,
+            dip_fiyat,
             koli_ici_adet,
             kdv_orani,
             hacim_m3,
@@ -129,9 +119,6 @@ try {
 
     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    /*
-     * Başarılı cevap
-     */
     jsonResponse([
         'success' => true,
         'data' => $products,
