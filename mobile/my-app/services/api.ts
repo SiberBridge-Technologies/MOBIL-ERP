@@ -1,143 +1,39 @@
-import * as SecureStore from 'expo-secure-store';
-
-const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL ||
-  'http://192.168.18.56/api';
-
+import { readStorage, writeStorage, deleteStorage } from './storage';
+export const API_BASE_URL = (process.env.EXPO_PUBLIC_API_BASE_URL || '').replace(/\/+$/, '');
 const TOKEN_KEY = 'erp_auth_token';
-
-export async function saveToken(token: string): Promise<void> {
-  await SecureStore.setItemAsync(TOKEN_KEY, token);
-
-  console.log(
-    '🔐 Token kaydedildi:',
-    token ? `VAR (${token.length} karakter)` : 'YOK'
-  );
+let expired: (() => void) | undefined;
+export function onSessionExpired(callback?: () => void) { expired = callback; }
+export async function saveToken(token: string) { await writeStorage(TOKEN_KEY, token); }
+export async function getToken() { return readStorage(TOKEN_KEY); }
+export async function clearToken() { await deleteStorage(TOKEN_KEY); }
+export async function invalidateSession() {
+  await Promise.all([clearToken(), deleteStorage('erp_current_user'), deleteStorage('erp_token_expiry')]);
+  expired?.();
 }
-
-export async function getToken(): Promise<string | null> {
-  const token = await SecureStore.getItemAsync(TOKEN_KEY);
-
-  console.log(
-    '🔐 Token okundu:',
-    token ? `VAR (${token.length} karakter)` : 'YOK'
-  );
-
-  return token;
-}
-
-export async function clearToken(): Promise<void> {
-  await SecureStore.deleteItemAsync(TOKEN_KEY);
-  console.log('🔐 Token silindi.');
-}
-
-interface ApiOptions {
-  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
-  body?: unknown;
-  requiresAuth?: boolean;
-}
-
 export class ApiError extends Error {
-  status: number;
-
-  constructor(message: string, status: number) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-  }
+  constructor(message: string, public status: number) { super(message); this.name = 'ApiError'; }
 }
-
-export async function apiRequest<T = any>(
-  endpoint: string,
-  options: ApiOptions = {}
-): Promise<T> {
-  const {
-    method = 'GET',
-    body,
-    requiresAuth = true,
-  } = options;
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
-  };
-
+interface ApiOptions { method?: 'GET' | 'POST' | 'PUT' | 'DELETE'; body?: unknown; requiresAuth?: boolean; }
+export async function apiRequest<T = any>(endpoint: string, options: ApiOptions = {}): Promise<T> {
+  if (!API_BASE_URL) throw new ApiError('API adresi ayarlanmamış. EXPO_PUBLIC_API_BASE_URL değerini belirtin.', 0);
+  const { method = 'GET', body, requiresAuth = true } = options;
+  const headers: Record<string,string> = { 'Content-Type':'application/json', Accept:'application/json' };
   if (requiresAuth) {
     const token = await getToken();
-
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-
-      console.log(
-        '📡 Authorization header gönderiliyor:',
-        `Bearer ${token.substring(0, 8)}...`
-      );
-    } else {
-      console.warn(
-        '⚠️ API isteği token olmadan gönderiliyor!'
-      );
-    }
+    if (!token) { await invalidateSession(); throw new ApiError('Lütfen tekrar giriş yapın.', 401); }
+    headers.Authorization = 'Bearer ' + token;
   }
-
-  const url = API_BASE_URL + endpoint;
-
-  console.log('🌐 API İsteği:', method, url);
-
-  let response: Response;
-
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20000);
   try {
-    response = await fetch(url, {
-      method,
-      headers,
-      body:
-        body !== undefined
-          ? JSON.stringify(body)
-          : undefined,
-    });
-  } catch (error) {
-    console.error('❌ API bağlantı hatası:', error);
-
-    throw new ApiError(
-      'Sunucuya bağlanılamadı. API adresini kontrol edin.',
-      0
-    );
-  }
-
-  const rawText = await response.text();
-
-  console.log(
-    '📥 API Cevabı:',
-    response.status,
-    rawText
-  );
-
-  let data: any = {};
-
-  if (rawText.trim().length > 0) {
-    try {
-      data = JSON.parse(rawText);
-    } catch {
-      console.error(
-        '❌ JSON parse hatası:',
-        rawText
-      );
-
-      throw new ApiError(
-        'Sunucudan geçersiz JSON yanıtı alındı.',
-        response.status
-      );
-    }
-  }
-
-  if (
-    !response.ok ||
-    data?.success === false
-  ) {
-    throw new ApiError(
-      data?.message || 'Bir hata oluştu.',
-      response.status
-    );
-  }
-
-  return data as T;
+    const response = await fetch(API_BASE_URL + endpoint, { method, headers, signal: controller.signal, body: body === undefined ? undefined : JSON.stringify(body) });
+    if (requiresAuth && response.status === 401) await invalidateSession();
+    let data: any;
+    try { data = await response.json(); } catch { throw new ApiError('Sunucudan geçersiz yanıt alındı.', response.status); }
+    if (!response.ok || data?.success === false) throw new ApiError(data?.message || 'İşlem tamamlanamadı.', response.status);
+    return data as T;
+  } catch (e) {
+    if (e instanceof ApiError) throw e;
+    throw new ApiError(controller.signal.aborted ? 'İstek zaman aşımına uğradı. Tekrar deneyebilirsiniz.' : 'Sunucuya bağlanılamadı.', 0);
+  } finally { clearTimeout(timeout); }
 }

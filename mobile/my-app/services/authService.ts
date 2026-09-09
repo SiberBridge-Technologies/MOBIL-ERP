@@ -1,4 +1,5 @@
-import { apiRequest, saveToken, clearToken } from './api';
+import { apiRequest, saveToken, invalidateSession, getToken } from './api';
+import { readStorage, writeStorage } from './storage';
 
 export interface LoginResponse {
   success: boolean;
@@ -25,12 +26,12 @@ export async function login(kullaniciAdi: string, sifre: string): Promise<LoginR
   // uygulamanın çökmesini engelliyoruz.
   if (!data || typeof data.token !== 'string' || data.token.length === 0) {
     throw new Error(
-      'Sunucudan geçerli bir oturum anahtarı (token) alınamadı. Ham yanıt: ' +
-        JSON.stringify(data)
+      'Sunucudan geçerli bir oturum anahtarı alınamadı.'
     );
   }
 
   await saveToken(data.token);
+  await writeStorage('erp_token_expiry', data.expires_at);
 
   if (data.user) {
     await saveUser(data.user);
@@ -42,20 +43,25 @@ export async function login(kullaniciAdi: string, sifre: string): Promise<LoginR
 export async function logout(): Promise<void> {
   try {
     await apiRequest('/auth/logout.php', { method: 'POST' });
+  } catch {
+    // Local logout must also succeed while offline.
   } finally {
-    await clearToken();
+    await invalidateSession();
   }
 }
 
 const USER_KEY = 'erp_current_user';
 
 export async function saveUser(user: LoginResponse['user']): Promise<void> {
-  const SecureStore = await import('expo-secure-store');
-  await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
+  await writeStorage(USER_KEY, JSON.stringify(user));
 }
 
 export async function getSavedUser(): Promise<LoginResponse['user'] | null> {
-  const SecureStore = await import('expo-secure-store');
-  const raw = await SecureStore.getItemAsync(USER_KEY);
-  return raw ? JSON.parse(raw) : null;
+  try {
+    const [raw, token, expiry] = await Promise.all([readStorage(USER_KEY), getToken(), readStorage('erp_token_expiry')]);
+    if (!raw || !token || !expiry || !Number.isFinite(Date.parse(expiry)) || Date.parse(expiry) <= Date.now()) {
+      await invalidateSession(); return null;
+    }
+    return JSON.parse(raw);
+  } catch { await invalidateSession(); return null; }
 }

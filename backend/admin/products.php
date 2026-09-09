@@ -9,8 +9,8 @@ $categoryFilter = (int) ($_GET['category_id'] ?? 0);
 $sql = 'SELECT p.*, c.ad AS kategori_adi FROM products p LEFT JOIN categories c ON c.id = p.category_id WHERE p.aktif = 1';
 $params = [];
 if ($search !== '') {
-    $sql .= ' AND (p.urun_kodu LIKE :s OR p.urun_adi LIKE :s)';
-    $params['s'] = '%' . $search . '%';
+    $sql .= ' AND (p.urun_kodu LIKE :s1 OR p.urun_adi LIKE :s2)';
+    $params['s1'] = $params['s2'] = '%' . $search . '%';
 }
 if ($categoryFilter > 0) {
     $sql .= ' AND p.category_id = :cid';
@@ -57,7 +57,7 @@ require __DIR__ . '/../includes/admin_header.php';
                 <th>Ürün Kodu</th>
                 <th>Ürün Adı</th>
                 <th>Kategori</th>
-                <th>Liste Fiyatı</th>
+                        <th>Adet Fiyatı</th>
                 <th>Koli Fiyatı</th>
                 <th>Stok</th>
                 <th></th>

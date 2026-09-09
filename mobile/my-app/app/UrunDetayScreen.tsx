@@ -53,31 +53,32 @@ const BIRIM_SECENEKLERI: {
 }[] = [
   { label: 'Adet', value: 'ADET' },
   { label: 'Koli', value: 'KOLI' },
-  { label: 'Stand', value: 'STAND' },
 ];
 
-const MIN_LOADING_MS = 1500;
+const MIN_LOADING_MS = 0;
 
 export default function UrunDetayScreen({
   route,
   navigation,
 }: any) {
   const { productId } = route.params;
-  const { addItem } = useCart();
+  const { addItem, items, vadeGun: cartTerm, setVadeGun: setCartTerm } = useCart();
+  const existing = items.find(i => i.product_id === productId);
 
   const [product, setProduct] =
     useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const [miktar, setMiktar] = useState('');
+  const [miktar, setMiktar] = useState(existing ? String(existing.birim_miktari) : '');
   const [siparisBirimi, setSiparisBirimi] =
-    useState<SiparisBirimi>('KOLI');
+    useState<SiparisBirimi>(existing?.siparis_birimi ?? 'KOLI');
 
-  const [iskonto1, setIskonto1] = useState('');
-  const [iskonto2, setIskonto2] = useState('');
-  const [iskonto3, setIskonto3] = useState('');
+  const [iskonto1, setIskonto1] = useState(existing ? String(existing.iskonto_1) : '');
+  const [iskonto2, setIskonto2] = useState(existing ? String(existing.iskonto_2) : '');
+  const [iskonto3, setIskonto3] = useState(existing ? String(existing.iskonto_3) : '');
 
-  const [vadeGun, setVadeGun] = useState('0');
+  const [vadeGun, setVadeGun] = useState(String(cartTerm));
   const [vadeMenuAcik, setVadeMenuAcik] =
     useState(false);
 
@@ -91,7 +92,8 @@ export default function UrunDetayScreen({
       try {
         const p = await getProduct(productId);
         if (!cancelled) setProduct(p);
-      } catch (error) {
+      } catch (error: any) {
+        if (!cancelled) setLoadError(error.message || "Ürün yüklenemedi.");
         console.error(
           'Ürün detay yükleme hatası:',
           error
@@ -118,31 +120,30 @@ export default function UrunDetayScreen({
 
     const qty = Math.max(
       0,
-      parseFloat(miktar || '0') || 0
+      Number(miktar.replace(',', '.') || '0') || 0
     );
 
     const isk1 = Math.max(
       0,
-      Math.min(100, parseFloat(iskonto1 || '0') || 0)
+      Math.min(100, Number(iskonto1.replace(',', '.') || '0') || 0)
     );
     const isk2 = Math.max(
       0,
-      Math.min(100, parseFloat(iskonto2 || '0') || 0)
+      Math.min(100, Number(iskonto2.replace(',', '.') || '0') || 0)
     );
     const isk3 = Math.max(
       0,
-      Math.min(100, parseFloat(iskonto3 || '0') || 0)
+      Math.min(100, Number(iskonto3.replace(',', '.') || '0') || 0)
     );
 
     const koliIciAdet =
       Number(product.koli_ici_adet) || 1;
     const standIciAdet =
-      Number((product as any).stand_ici_adet) ||
+      Number(product.stand_ici_adet) ||
       koliIciAdet;
 
     const stok = Number(product.stok) || 0;
-    const koliFiyati =
-      Number(product.koli_fiyati) || 0;
+    const adetFiyati = Number(product.liste_fiyati) || 0;
     const dipFiyat =
       Number(product.dip_fiyat) || 0;
 
@@ -162,9 +163,9 @@ export default function UrunDetayScreen({
         koliIciAdet > 0 ? adet / koliIciAdet : 0;
     }
 
-    const netKoliFiyati =
+    const netAdetFiyati =
       Math.round(
-        (koliFiyati *
+        (adetFiyati *
           (1 - isk1 / 100) *
           (1 - isk2 / 100) *
           (1 - isk3 / 100) +
@@ -172,14 +173,7 @@ export default function UrunDetayScreen({
           100
       ) / 100;
 
-    const netAdetFiyati =
-      koliIciAdet > 0
-        ? Math.round(
-            ((netKoliFiyati / koliIciAdet) +
-              Number.EPSILON) *
-              100
-          ) / 100
-        : 0;
+    const netKoliFiyati = Math.round((netAdetFiyati * koliIciAdet + Number.EPSILON) * 100) / 100;
 
     const netTutar =
       Math.round(
@@ -195,7 +189,7 @@ export default function UrunDetayScreen({
     const dipFiyatUygun =
       netAdetFiyati >= yuvarlanmisDipFiyat;
     const stokUygun = adet <= stok;
-    const miktarUygun = qty > 0;
+    const miktarUygun = qty > 0 && Number.isInteger(qty) && Number.isInteger(adet);
 
     const girilebilir =
       dipFiyatUygun && stokUygun && miktarUygun;
@@ -224,6 +218,8 @@ export default function UrunDetayScreen({
     iskonto2,
     iskonto3,
   ]);
+
+  if (!loading && !product) return <View style={styles.center}><Text>{loadError || "Ürün bulunamadı."}</Text><TouchableOpacity onPress={() => navigation.goBack()}><Text>Geri dön</Text></TouchableOpacity></View>;
 
   if (loading || !product) {
     return (
@@ -260,16 +256,20 @@ export default function UrunDetayScreen({
   const handleSepeteEkle = () => {
     if (!girilebilir || !hesap) return;
 
-    const koliForCart = Math.max(
-      1,
-      Math.round(hesap.koliAdedi * 1000) / 1000
-    );
-
-    addItem({
+    const added = addItem({
       product_id: product.id,
       urun_kodu: product.urun_kodu,
       urun_adi: product.urun_adi,
-      koli_adedi: koliForCart,
+      koli_adedi: hesap.koliAdedi,
+      adet: hesap.adet,
+      koli_ici_adet: Number(product.koli_ici_adet),
+      adet_fiyati: Number(product.liste_fiyati),
+      stand_aktif: Number(product.stand_aktif),
+      stand_ici_adet: product.stand_ici_adet === null ? null : Number(product.stand_ici_adet),
+      siparis_birimi: siparisBirimi,
+      birim_miktari: hesap.qty,
+      stok: Number(product.stok),
+      kdv_orani: Number(product.kdv_orani),
       koli_fiyati: Number(product.koli_fiyati) || 0,
       dip_fiyat: Number(product.dip_fiyat) || 0,
       iskonto_1: hesap.isk1,
@@ -277,7 +277,7 @@ export default function UrunDetayScreen({
       iskonto_3: hesap.isk3,
     });
 
-    navigation.goBack();
+    if (added) { setCartTerm(Number(vadeGun)); navigation.goBack(); }
   };
 
   return (
@@ -359,7 +359,7 @@ export default function UrunDetayScreen({
 
           <View style={styles.infoGrid}>
             <InfoTile
-              label="Liste Fiyatı"
+              label="Adet Fiyatı"
               value={`${Number(product.liste_fiyati ?? 0).toFixed(2)} ₺`}
             />
             <InfoTile
@@ -370,6 +370,12 @@ export default function UrunDetayScreen({
               label="Koli İçi"
               value={`${Number(product.koli_ici_adet ?? 0)} adet`}
             />
+            {Number(product.stand_aktif) === 1 && (
+              <InfoTile
+                label="Stand"
+                value={`${Number(product.stand_ici_adet ?? 0)} adet · ${Number(product.stand_fiyati ?? 0).toFixed(2)} ₺`}
+              />
+            )}
             <InfoTile
               label="KDV"
               value={`%${product.kdv_orani ?? 0}`}
@@ -398,7 +404,7 @@ export default function UrunDetayScreen({
             Sipariş Birimi
           </Text>
           <View style={styles.segmentRow}>
-            {BIRIM_SECENEKLERI.map((b) => {
+            {[...BIRIM_SECENEKLERI, ...(Number(product.stand_aktif) === 1 ? [{ label: 'Stand', value: 'STAND' as SiparisBirimi }] : [])].map((b) => {
               const selected =
                 siparisBirimi === b.value;
               return (

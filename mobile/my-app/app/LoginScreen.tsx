@@ -32,9 +32,9 @@ export default function LoginScreen({ navigation }: any) {
     }
     setLoading(true);
     try {
-      const data = await login(kullaniciAdi, sifre);
+      const data = await login(kullaniciAdi.trim(), sifre);
       setUser(data.user);
-      navigation.replace('MainTabs');
+
     } catch (e: any) {
       setError(e.message || 'Giriş başarısız.');
     } finally {

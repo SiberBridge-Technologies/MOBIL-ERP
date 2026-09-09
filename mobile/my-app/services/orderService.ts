@@ -1,4 +1,5 @@
 import { apiRequest } from './api';
+import { fetchAllPages } from './pagination';
 
 export interface CartItem {
   product_id: number;
@@ -7,6 +8,15 @@ export interface CartItem {
   urun_adi: string;
 
   koli_adedi: number;
+  adet: number;
+  koli_ici_adet: number;
+  adet_fiyati: number;
+  stand_aktif: number;
+  stand_ici_adet: number | null;
+  siparis_birimi: 'ADET' | 'KOLI' | 'STAND';
+  birim_miktari: number;
+  stok: number;
+  kdv_orani: number;
 
   koli_fiyati: number;
   dip_fiyat: number;
@@ -18,6 +28,8 @@ export interface CartItem {
 
 export interface CreateOrderPayload {
   customer_id: number;
+  request_id?: string;
+  expected_total?: number;
 
   evrak_aciklamasi?: string;
 
@@ -34,6 +46,9 @@ export interface CreateOrderPayload {
   items: Array<{
     product_id: number;
     koli_adedi: number;
+    adet?: number;
+    siparis_birimi?: 'ADET' | 'KOLI' | 'STAND';
+    birim_miktari?: number;
     iskonto_1?: number;
     iskonto_2?: number;
     iskonto_3?: number;
@@ -69,12 +84,5 @@ export interface MyOrder {
 }
 
 export async function getMyOrders(): Promise<MyOrder[]> {
-  const data =
-    await apiRequest<{ data: MyOrder[] }>(
-      '/orders/list.php'
-    );
-
-  return Array.isArray(data.data)
-    ? data.data
-    : [];
+  return fetchAllPages<MyOrder>('/orders/list.php');
 }

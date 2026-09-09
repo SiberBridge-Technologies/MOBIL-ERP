@@ -5,7 +5,6 @@ import {
 
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   RefreshControl,
   StyleSheet,
@@ -580,3 +579,4 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
+import { Alert } from '../services/dialogs';

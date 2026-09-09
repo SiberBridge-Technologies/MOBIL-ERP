@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/admin_auth.php';
 requireAdminLogin();
+require_once __DIR__ . '/../includes/product_validation.php';
 
 $pdo = getDbConnection();
 $id = (int) ($_GET['id'] ?? 0);
@@ -32,19 +33,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $urunAdi = trim($_POST['urun_adi'] ?? '');
     $listeFiyati = (float) ($_POST['liste_fiyati'] ?? 0);
-    $koliFiyati = (float) ($_POST['koli_fiyati'] ?? 0);
     $dipFiyati = (float) ($_POST['dip_fiyat'] ?? 0);
 
     if ($urunAdi === '') {
         $error = 'Ürün adı zorunludur.';
     } elseif (
         $listeFiyati < 0 ||
-        $koliFiyati < 0 ||
         $dipFiyati < 0
     ) {
         $error = 'Fiyatlar negatif olamaz.';
     } else {
         try {
+            validateProduct($_POST);
+            $pricing = normalizeProductPricing($_POST);
+            $pdo->beginTransaction();
+            $locked=$pdo->prepare('SELECT stok FROM products WHERE id=? FOR UPDATE');$locked->execute([$id]);$oldStock=(int)$locked->fetchColumn();
             $stmt = $pdo->prepare(
                 'UPDATE products SET
                     urun_adi = :urun_adi,
@@ -55,6 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     koli_fiyati = :koli_fiyati,
                     dip_fiyat = :dip_fiyat,
                     koli_ici_adet = :koli_ici_adet,
+                    stand_aktif = :stand_aktif,
+                    stand_ici_adet = :stand_ici_adet,
+                    stand_fiyati = :stand_fiyati,
                     kdv_orani = :kdv_orani,
                     hacim_m3 = :hacim_m3,
                     stok = :stok,
@@ -67,13 +73,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'category_id'   => $_POST['category_id'] ?: null,
                 'aciklama'      => $_POST['aciklama'] ?? null,
                 'barkod'        => $_POST['barkod'] ?? null,
-                'liste_fiyati'  => $listeFiyati,
-                'koli_fiyati'   => $koliFiyati,
+                'liste_fiyati'  => $pricing['liste_fiyati'],
+                'koli_fiyati'   => $pricing['koli_fiyati'],
                 'dip_fiyat'     => $dipFiyati,
-                'koli_ici_adet' => max(
-                    1,
-                    (int) ($_POST['koli_ici_adet'] ?? 1)
-                ),
+                'koli_ici_adet' => $pricing['koli_ici_adet'],
+                'stand_aktif' => $pricing['stand_aktif'],
+                'stand_ici_adet' => $pricing['stand_ici_adet'],
+                'stand_fiyati' => $pricing['stand_fiyati'],
                 'kdv_orani' => max(
                     0,
                     (float) ($_POST['kdv_orani'] ?? 20)
@@ -90,6 +96,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'id' => $id,
             ]);
 
+            $delta=(int)($_POST['stok']??0)-$oldStock;
+            if($delta!==0)$pdo->prepare('INSERT INTO stock_movements (product_id,hareket_tipi,miktar,aciklama) VALUES (?,"DUZELTME",?,"Panel stok güncellemesi")')->execute([$id,$delta]);
+            $pdo->commit();
             $stmt2 = $pdo->prepare(
                 'SELECT * FROM products WHERE id = :id'
             );
@@ -98,8 +107,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $product = $stmt2->fetch();
             $success = true;
 
-        } catch (PDOException $e) {
-            $error = 'Ürün güncellenirken hata oluştu.';
+        } catch (Throwable $e) {
+            if($pdo->inTransaction())$pdo->rollBack();
+            $error = $e instanceof DomainException ? $e->getMessage() : 'Ürün güncellenirken hata oluştu.';
         }
     }
 }
@@ -111,7 +121,7 @@ $activePage = 'products';
 require __DIR__ . '/../includes/admin_header.php';
 ?>
 
-<div class="card" style="max-width:720px;">
+<div class="card product-form-card">
 
     <?php if ($error): ?>
         <div class="alert alert-error">
@@ -126,6 +136,7 @@ require __DIR__ . '/../includes/admin_header.php';
     <?php endif; ?>
 
     <form method="POST" action="product-edit.php?id=<?= $id ?>">
+            <?= csrfField() ?>
 
         <div class="form-row">
             <div class="form-group">
@@ -185,7 +196,7 @@ require __DIR__ . '/../includes/admin_header.php';
 
         <div class="form-row">
             <div class="form-group">
-                <label>Liste Fiyatı (TL)</label>
+                <label>Adet Fiyatı (TL)</label>
                 <input
                     type="number"
                     step="0.01"
@@ -203,12 +214,13 @@ require __DIR__ . '/../includes/admin_header.php';
                     min="0"
                     name="koli_fiyati"
                     value="<?= e((string) $product['koli_fiyati']) ?>"
+                    readonly
                 >
             </div>
         </div>
 
         <div class="form-group">
-            <label>Dip Fiyat (TL)</label>
+            <label>Dip Adet Fiyatı (TL)</label>
             <input
                 type="number"
                 step="0.01"
@@ -219,6 +231,12 @@ require __DIR__ . '/../includes/admin_header.php';
             <small style="display:block;margin-top:5px;color:var(--text-muted);">
                 Net fiyatın altına inilemeyecek minimum birim fiyat.
             </small>
+        </div>
+
+        <div class="form-row stand-row">
+            <div class="form-group stand-toggle"><label><input type="checkbox" name="stand_aktif" value="1" <?= !empty($product['stand_aktif']) ? 'checked' : '' ?>> Stand Aktif</label></div>
+            <div class="form-group"><label>Stand İçi Adet</label><input type="number" min="1" name="stand_ici_adet" value="<?= e((string)($product['stand_ici_adet'] ?? 1)) ?>"></div>
+            <div class="form-group"><label>Stand Fiyatı (TL)</label><input type="number" step="0.01" name="stand_fiyati" value="<?= e((string)($product['stand_fiyati'] ?? 0)) ?>" readonly></div>
         </div>
 
         <div class="form-row">
@@ -267,28 +285,14 @@ require __DIR__ . '/../includes/admin_header.php';
             </div>
         </div>
 
-        <div class="form-group">
-            <label>Birim</label>
-            <select name="birim">
-                <?php foreach (['ADET', 'KOLI', 'KG', 'LITRE'] as $b): ?>
-                    <option
-                        value="<?= $b ?>"
-                        <?= $product['birim'] === $b ? 'selected' : '' ?>
-                    >
-                        <?= $b ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Değişiklikleri Kaydet</button>
+            <a href="products.php" class="btn btn-secondary">Geri Dön</a>
         </div>
-
-        <button type="submit" class="btn btn-primary">
-            Değişiklikleri Kaydet
-        </button>
-
-        <a href="products.php" class="btn btn-secondary">
-            Geri Dön
-        </a>
     </form>
+    <script>
+    (()=>{const f=document.querySelector('form[action^="product-edit.php"]'),u=f.elements.liste_fiyati,p=f.elements.koli_ici_adet,k=f.elements.koli_fiyati,a=f.elements.stand_aktif,s=f.elements.stand_ici_adet,sf=f.elements.stand_fiyati;const calc=()=>{k.value=((+u.value||0)*(+p.value||0)).toFixed(2);sf.value=((+u.value||0)*(+s.value||0)).toFixed(2)};const toggle=()=>{s.closest('.form-group').hidden=!a.checked;sf.closest('.form-group').hidden=!a.checked;s.disabled=!a.checked;sf.disabled=!a.checked};[u,p,s].forEach(x=>x.addEventListener('input',calc));a.addEventListener('change',toggle);calc();toggle()})();
+    </script>
 
     <hr style="
         margin:24px 0;
@@ -301,6 +305,7 @@ require __DIR__ . '/../includes/admin_header.php';
         action="product-edit.php?id=<?= $id ?>"
         onsubmit="return confirm('Bu ürünü pasif hale getirmek istediğinize emin misiniz?');"
     >
+            <?= csrfField() ?>
         <button
             type="submit"
             name="sil"

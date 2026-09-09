@@ -230,8 +230,17 @@ export default function SepetScreen({
         Number(
           product.koli_fiyati
         ),
+      adet_fiyati: Number(product.liste_fiyati),
+      stand_aktif: Number(product.stand_aktif),
+      stand_ici_adet: product.stand_ici_adet === null ? null : Number(product.stand_ici_adet),
+      siparis_birimi: 'KOLI',
+      birim_miktari: currentQuantity + 1,
         
 dip_fiyat: Number(product.dip_fiyat),
+      adet: (existingItem?.adet ?? 0) + Number(product.koli_ici_adet),
+      koli_ici_adet: Number(product.koli_ici_adet),
+      stok: Number(product.stok),
+      kdv_orani: Number(product.kdv_orani),
 
       iskonto_1:
         existingItem?.iskonto_1 ?? 0,
@@ -264,6 +273,7 @@ dip_fiyat: Number(product.dip_fiyat),
 
     if (!item) return;
 
+    const step = item.siparis_birimi === 'ADET' ? 1 : item.siparis_birimi === 'STAND' ? Number(item.stand_ici_adet) : item.koli_ici_adet;
 
     addItem({
 
@@ -271,6 +281,8 @@ dip_fiyat: Number(product.dip_fiyat),
 
       koli_adedi:
         item.koli_adedi + 1,
+      adet: item.adet + step,
+      birim_miktari: item.birim_miktari + 1,
 
     });
 
@@ -294,13 +306,15 @@ dip_fiyat: Number(product.dip_fiyat),
 
     if (!item) return;
 
+    const step = item.siparis_birimi === 'ADET' ? 1 : item.siparis_birimi === 'STAND' ? Number(item.stand_ici_adet) : item.koli_ici_adet;
+
 
     /*
      * 1 kolinin altına düşerse
      * ürün tamamen silinir.
      */
 
-    if (item.koli_adedi <= 1) {
+    if (item.birim_miktari <= 1) {
 
       removeItem(productId);
 
@@ -315,6 +329,8 @@ dip_fiyat: Number(product.dip_fiyat),
 
       koli_adedi:
         item.koli_adedi - 1,
+      adet: item.adet - step,
+      birim_miktari: item.birim_miktari - 1,
 
     });
 
@@ -1065,7 +1081,7 @@ dip_fiyat: Number(product.dip_fiyat),
                       styles.summaryLabel
                     }
                   >
-                    Genel Toplam
+                    Genel Toplam (KDV dahil)
                   </Text>
 
                   <Text

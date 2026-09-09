@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { logout } from '../services/authService';
 import { useAuth } from '../services/AuthContext';
 import { colors, spacing } from '../constants/theme';
@@ -22,7 +22,7 @@ export default function ProfilScreen({ navigation }: any) {
             await logout();
           } finally {
             setUser(null);
-            navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+
           }
         },
       },
@@ -111,3 +111,5 @@ const styles = StyleSheet.create({
   },
   logoutText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 });
+
+import { Alert } from '../services/dialogs';

@@ -1,4 +1,5 @@
 import { apiRequest } from './api';
+import { fetchAllPages } from './pagination';
 
 export interface Product {
   id: number;
@@ -12,6 +13,9 @@ export interface Product {
   dip_fiyat: number;
 
   koli_ici_adet: number;
+  stand_aktif: number;
+  stand_ici_adet: number | null;
+  stand_fiyati: number | null;
   kdv_orani: number;
   hacim_m3: number;
   stok: number;
@@ -19,27 +23,8 @@ export interface Product {
   gorsel_url: string | null;
 }
 
-export async function getProducts(): Promise<Product[]> {
-  const data = await apiRequest<{ data: Product[] }>(
-    '/products/list.php'
-  );
-
-  return Array.isArray(data.data)
-    ? data.data
-    : [];
-}
-
-export async function searchProducts(
-  query: string
-): Promise<Product[]> {
-  const data = await apiRequest<{ data: Product[] }>(
-    `/products/list.php?q=${encodeURIComponent(query)}`
-  );
-
-  return Array.isArray(data.data)
-    ? data.data
-    : [];
-}
+export async function getProducts(): Promise<Product[]> { return fetchAllPages<Product>('/products/list.php'); }
+export async function searchProducts(query:string): Promise<Product[]> { return fetchAllPages<Product>('/products/list.php?q='+encodeURIComponent(query)); }
 
 export async function getProduct(
   id: number

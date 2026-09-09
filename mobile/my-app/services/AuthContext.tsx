@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { onSessionExpired } from './api';
 import { getSavedUser } from './authService';
 import type { LoginResponse } from './authService';
 
@@ -19,6 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Uygulama açılışında (örn. telefon kapatılıp açıldığında) daha önce
   // kaydedilmiş kullanıcı bilgisini SecureStore'dan geri yükle.
   useEffect(() => {
+    onSessionExpired(() => setUser(null));
     (async () => {
       try {
         const saved = await getSavedUser();
@@ -27,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       }
     })();
+    return () => onSessionExpired(undefined);
   }, []);
 
   return (

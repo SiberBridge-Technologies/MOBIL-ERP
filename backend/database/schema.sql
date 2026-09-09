@@ -126,6 +126,8 @@ CREATE TABLE `orders` (
   `kdv_toplam` decimal(14,2) NOT NULL DEFAULT 0.00,
   `genel_toplam` decimal(14,2) NOT NULL DEFAULT 0.00,
   `note` text DEFAULT NULL,
+  `request_id` varchar(80) DEFAULT NULL,
+  `request_hash` char(64) DEFAULT NULL,
   `olusturulma_tarihi` datetime NOT NULL DEFAULT current_timestamp(),
   `guncellenme_tarihi` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -140,14 +142,16 @@ CREATE TABLE `order_items` (
   `id` int(11) NOT NULL,
   `order_id` int(11) NOT NULL,
   `product_id` int(11) NOT NULL,
-  `koli_adedi` int(11) NOT NULL DEFAULT 0,
+  `koli_adedi` decimal(16,6) NOT NULL DEFAULT 0,
   `adet` int(11) NOT NULL DEFAULT 0,
   `birim_fiyat` decimal(12,2) NOT NULL,
   `iskonto_1` decimal(5,2) NOT NULL DEFAULT 0.00,
   `iskonto_2` decimal(5,2) NOT NULL DEFAULT 0.00,
   `iskonto_3` decimal(5,2) NOT NULL DEFAULT 0.00,
   `net_fiyat` decimal(12,2) NOT NULL,
-  `net_tutar` decimal(14,2) NOT NULL
+  `net_tutar` decimal(14,2) NOT NULL,
+  `kdv_orani` decimal(5,2) DEFAULT NULL,
+  `kdv_tutari` decimal(14,2) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -167,6 +171,9 @@ CREATE TABLE `products` (
   `koli_fiyati` decimal(12,2) NOT NULL DEFAULT 0.00,
   `dip_fiyat` decimal(12,2) NOT NULL DEFAULT 0.00,
   `koli_ici_adet` int(11) NOT NULL DEFAULT 1,
+  `stand_aktif` tinyint(1) NOT NULL DEFAULT 0,
+  `stand_ici_adet` int(11) DEFAULT NULL,
+  `stand_fiyati` decimal(12,2) DEFAULT NULL,
   `kdv_orani` decimal(5,2) NOT NULL DEFAULT 20.00,
   `hacim_m3` decimal(10,4) NOT NULL DEFAULT 0.0000,
   `stok` int(11) NOT NULL DEFAULT 0,
@@ -242,6 +249,7 @@ ALTER TABLE `employee_customers`
 ALTER TABLE `orders`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `siparis_no` (`siparis_no`),
+  ADD UNIQUE KEY `employee_request` (`employee_id`, `request_id`),
   ADD KEY `idx_customer` (`customer_id`),
   ADD KEY `idx_employee` (`employee_id`),
   ADD KEY `idx_durum` (`durum`);

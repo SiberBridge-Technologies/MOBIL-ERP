@@ -6,29 +6,41 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "build:android": "eas build --platform android"
+    "build:android": "eas build --platform android",
+    "typecheck": "tsc --noEmit",
+    "web": "expo start --web",
+    "test:logic": "node --experimental-strip-types --test tests/logic.test.ts"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "@react-navigation/bottom-tabs": "^6.5.20",
     "@react-navigation/native": "^6.1.17",
     "@react-navigation/native-stack": "^6.9.26",
-    "expo": "^57.0.0",
+    "expo": "~57.0.21",
     "expo-constants": "~57.0.17",
     "expo-file-system": "~57.0.6",
     "expo-secure-store": "~57.0.3",
-    "expo-sharing": "~57.0.17",
+    "expo-sharing": "~57.0.18",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
+    "react-dom": "19.2.3",
     "react-native": "0.86.3",
     "react-native-safe-area-context": "~5.7.0",
-    "react-native-screens": "~4.26.0"
+    "react-native-screens": "~4.26.0",
+    "react-native-web": "^0.21.2"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
+    "@playwright/test": "^1.63.0",
     "@types/node": "^26.4.1",
     "@types/react": "~19.2.4",
     "typescript": "~6.0.3"
+  },
+  "overrides": {
+    "decode-uri-component": "file:./vendor/decode-uri-component",
+    "xcode": {
+      "uuid": "11.1.1"
+    }
   },
   "private": true
 }

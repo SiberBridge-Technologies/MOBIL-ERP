@@ -5,7 +5,8 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "platforms": [
-      "android"
+      "android",
+      "web"
     ],
     "android": {
       "package": "com.siberbridge.erpapp",

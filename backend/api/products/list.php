@@ -81,6 +81,9 @@ try {
             koli_fiyati,
             dip_fiyat,
             koli_ici_adet,
+            stand_aktif,
+            stand_ici_adet,
+            stand_fiyati,
             kdv_orani,
             hacim_m3,
             stok,
@@ -143,11 +146,9 @@ try {
         $e->getLine()
     );
 
-    http_response_code(500);
 
     jsonResponse([
         'success' => false,
         'message' => 'Ürünler alınırken sunucu hatası oluştu.',
-        'error' => $e->getMessage(),
-    ]);
+    ], 500);
 }

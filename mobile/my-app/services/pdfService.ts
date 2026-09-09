@@ -1,11 +1,9 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 
-import { getToken } from './api';
+import { getToken, API_BASE_URL, invalidateSession } from './api';
+import { Platform } from 'react-native';
 
-const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL ||
-  'http://192.168.18.56/B/api';
 
 export async function downloadAndShareOrderPdf(
   orderId: number,
@@ -24,6 +22,14 @@ export async function downloadAndShareOrderPdf(
     '_'
   );
 
+  if (Platform.OS === 'web') {
+    const response = await fetch(API_BASE_URL + '/orders/pdf.php?id=' + orderId, {headers:{Authorization:'Bearer '+token}});
+    if (response.status === 401) await invalidateSession();
+    if (!response.ok || !response.headers.get('content-type')?.includes('application/pdf')) throw new Error('PDF alınamadı.');
+    const url = URL.createObjectURL(await response.blob());
+    const link = document.createElement('a'); link.href=url; link.download='Siparis-'+safeOrderNo+'.pdf'; link.click();
+    setTimeout(()=>URL.revokeObjectURL(url), 60000); return;
+  }
   const cacheDirectory =
     FileSystem.cacheDirectory;
 
@@ -58,6 +64,7 @@ export async function downloadAndShareOrderPdf(
     result.uri
   );
 
+  if (result.status === 401) await invalidateSession();
   if (result.status !== 200) {
     throw new Error(
       `PDF alınamadı. Sunucu HTTP ${result.status} döndürdü.`

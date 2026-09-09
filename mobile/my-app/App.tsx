@@ -5,7 +5,8 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { CartProvider } from './services/CartContext';
-import { AuthProvider } from './services/AuthContext';
+import { ActivityIndicator, View } from 'react-native';
+import { AuthProvider, useAuth } from './services/AuthContext';
 import LoginScreen from './app/LoginScreen';
 import MainTabs from './app/MainTabs';
 import CariSayfasiScreen from './app/CariSayfasiScreen';
@@ -32,23 +33,31 @@ export default function App() {
     // konumlanmasını sağlar (responsive tasarımın bir parçası).
     <SafeAreaProvider>
       <AuthProvider>
-        <CartProvider>
+        <AuthenticatedApp />
+      </AuthProvider>
+    </SafeAreaProvider>
+  );
+}
+
+function AuthenticatedApp() {
+  const { user, loading } = useAuth();
+  if (loading) return <View style={{flex:1,justifyContent:"center"}}><ActivityIndicator /></View>;
+  return (
+        <CartProvider key={user?.id ?? "guest"}>
           <StatusBar style="dark" />
           <NavigationContainer>
             <Stack.Navigator
-              initialRouteName="Login"
               screenOptions={{ headerShown: false }}
             >
-              <Stack.Screen name="Login" component={LoginScreen} />
+              {!user ? <Stack.Screen name="Login" component={LoginScreen} /> : <>
               <Stack.Screen name="MainTabs" component={MainTabs} />
               <Stack.Screen name="CariSayfasi" component={CariSayfasiScreen} />
               <Stack.Screen name="Sepet" component={SepetScreen} />
               <Stack.Screen name="UrunDetay" component={UrunDetayScreen} />
               <Stack.Screen name="SiparisFormu" component={SiparisFormuScreen} />
+              </>}
             </Stack.Navigator>
           </NavigationContainer>
         </CartProvider>
-      </AuthProvider>
-    </SafeAreaProvider>
   );
 }

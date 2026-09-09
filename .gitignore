@@ -1,0 +1,4 @@
+.local/
+backend/storage/*
+!backend/storage/.htaccess
+mobile/my-app/dist/

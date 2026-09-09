@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import HeaderBar from '../components/HeaderBar';
 
 // Figma: "cari-arama-bos 2" (boş durum) ve "cari-arama-sonuc 3" (sonuç listesi)
 export default function CariAramaScreen({ navigation }: any) {
+  const latest = useRef(0);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(false);
@@ -23,14 +24,18 @@ export default function CariAramaScreen({ navigation }: any) {
   const [loadedOnce, setLoadedOnce] = useState(false);
 
   const load = useCallback(async (text: string, isRefresh = false) => {
+    const request = ++latest.current;
     if (isRefresh) setRefreshing(true);
     else setLoading(true);
     try {
       // Boş arama metni de geçerlidir: bu durumda backend, kullanıcının
       // yetkili olduğu TÜM carileri döner (arama yapmaya gerek kalmadan).
       const data = await searchCustomers(text);
-      setResults(data);
+      if (request === latest.current) setResults(data);
+    } catch (e: any) {
+      if (request === latest.current) Alert.alert('Cariler yüklenemedi', e.message);
     } finally {
+      if (request !== latest.current) return;
       setLoading(false);
       setRefreshing(false);
       setLoadedOnce(true);
@@ -165,3 +170,5 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: spacing.sm },
   emptyText: { fontSize: 13, color: colors.textMuted, textAlign: 'center' },
 });
+
+import { Alert } from '../services/dialogs';

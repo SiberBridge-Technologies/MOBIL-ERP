@@ -361,6 +361,18 @@ tr:hover td { background: var(--zinc-50); }
 .form-group input:disabled { background: var(--muted); color: var(--muted-foreground); }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
+/* Ürün formu: masaüstünde okunaklı, gereksiz yere yayılmayan düzen. */
+.product-form-card { max-width: 640px; padding: 20px; }
+.product-form-card .form-group { margin-bottom: 12px; }
+.product-form-card .form-row { gap: 12px; }
+.product-form-card textarea { min-height: 74px; resize: vertical; }
+.product-form-card input[readonly] { background: var(--muted); color: var(--zinc-600); cursor: default; }
+.product-form-card .stand-row { grid-template-columns: 150px 1fr 1fr; align-items: end; }
+.product-form-card .stand-toggle { height: 39px; display: flex; align-items: center; padding: 0 12px; border: 1px solid var(--input); border-radius: 8px; background: var(--zinc-50); }
+.product-form-card .stand-toggle label { display: flex; align-items: center; gap: 8px; margin: 0; cursor: pointer; }
+.product-form-card .stand-toggle input { width: 16px; height: 16px; margin: 0; }
+.product-form-card .form-actions { display: flex; gap: 8px; margin-top: 4px; }
+
 /* ---------- Buttons (shadcn button tarzı) ---------- */
 .btn {
     display: inline-flex;
@@ -435,4 +447,5 @@ tr:hover td { background: var(--zinc-50); }
     .content { padding: 18px; }
     .stat-grid { grid-template-columns: 1fr; }
     .form-row { grid-template-columns: 1fr; }
+    .product-form-card .stand-row { grid-template-columns: 1fr; }
 }

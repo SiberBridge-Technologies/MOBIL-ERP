@@ -34,6 +34,8 @@ export default function CariSayfasiScreen({ route, navigation }: any) {
       const res = await getCustomer(customerId);
       setLocalCustomer(res.data);
       setOrders(res.son_siparisler);
+    } catch (e: any) {
+      Alert.alert('Cari yüklenemedi', e.message);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -172,3 +174,5 @@ const styles = StyleSheet.create({
   orderTotal: { fontSize: 15, fontWeight: '700', color: colors.text },
   emptyText: { color: colors.textMuted, textAlign: 'center', marginTop: spacing.lg },
 });
+
+import { Alert } from '../services/dialogs';

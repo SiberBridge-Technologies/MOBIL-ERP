@@ -1,4 +1,5 @@
 import { apiRequest } from './api';
+import { fetchAllPages } from './pagination';
 
 export interface Customer {
   id: number;
@@ -24,10 +25,7 @@ export interface CustomerOrder {
 }
 
 export async function searchCustomers(query: string): Promise<Customer[]> {
-  const data = await apiRequest<{ data: Customer[] }>(
-    `/customers/list.php?q=${encodeURIComponent(query)}`
-  );
-  return data.data;
+  return fetchAllPages<Customer>('/customers/list.php?q='+encodeURIComponent(query));
 }
 
 export async function getCustomer(

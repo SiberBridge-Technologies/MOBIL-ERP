@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useNavigation, useNavigationState } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, fontSize, isNarrowScreen } from '../constants/theme';
 import { useAuth } from '../services/AuthContext';
@@ -14,6 +15,8 @@ interface Props {
 // - Durum çubuğu/çentik boşluğu (safe area) otomatik hesaplanır.
 // - Dar ekranlarda (küçük telefonlar) marka metni gizlenip yer başlığa bırakılır.
 export default function HeaderBar({ title, subtitle }: Props) {
+  const navigation = useNavigation();
+  const canGoBack = useNavigationState(state => state.index > 0);
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const narrow = isNarrowScreen();
@@ -31,6 +34,7 @@ export default function HeaderBar({ title, subtitle }: Props) {
   return (
     <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.left}>
+        {canGoBack && <TouchableOpacity accessibilityRole="button" accessibilityLabel="Geri" onPress={() => navigation.goBack()} style={{padding:8}}><Text>‹ Geri</Text></TouchableOpacity>}
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initials}</Text>
         </View>

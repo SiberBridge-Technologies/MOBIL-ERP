@@ -1,45 +1,64 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useCart } from '../services/CartContext';
 import { createOrder } from '../services/orderService';
 import { colors, spacing, radius, fontSize, cardStyle } from '../constants/theme';
 import HeaderBar from '../components/HeaderBar';
+import { normalizeDate } from '../services/orderDate';
 
 // Figma: "Siparis-Formu-Screen 8" — Evrak Açıklaması, Teslim Tarihi, Ambar Bilgisi, Ödeme Tipi
 export default function SiparisFormuScreen({ navigation }: any) {
-  const { customerId, customerName, items, clearCart } = useCart();
+  const { customerId, customerName, items, clearCart, vadeGun, genelToplam, refreshPrices } = useCart();
 
   const [evrakAciklamasi, setEvrakAciklamasi] = useState('');
   const [teslimTarihi, setTeslimTarihi] = useState('');
   const [ambarBilgisi, setAmbarBilgisi] = useState('');
-  const [odemeTipi, setOdemeTipi] = useState<'NAKIT' | 'VADELI'>('NAKIT');
+  const [odemeTipi, setOdemeTipi] = useState<'NAKIT' | 'VADELI'>(vadeGun > 0 ? 'VADELI' : 'NAKIT');
   const [saving, setSaving] = useState(false);
+  const [termDays, setTermDays] = useState(String(vadeGun || 30));
+  const inFlight = useRef(false);
+  const retry = useRef({signature:'', key:''});
 
   const handleSave = async () => {
-    if (!customerId) return;
+    if (inFlight.current) return;
+    if (!customerId || !items.length) { Alert.alert('Eksik bilgi', 'Cari seçip sepete ürün ekleyin.'); return; }
+    const delivery = teslimTarihi.trim() ? normalizeDate(teslimTarihi) : undefined;
+    const now = new Date(); const today = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    if (teslimTarihi.trim() && (!delivery || delivery < today)) { Alert.alert('Geçersiz tarih', 'Geçerli ve geçmişte olmayan bir teslim tarihi girin.'); return; }
+    if (odemeTipi === 'VADELI' && (!Number.isInteger(Number(termDays)) || Number(termDays) < 1 || Number(termDays) > 365)) { Alert.alert('Geçersiz vade', 'Vade 1–365 gün olmalıdır.'); return; }
+    inFlight.current = true;
     setSaving(true);
     try {
-      const result = await createOrder({
+      const payload = {
         customer_id: customerId,
         evrak_aciklamasi: evrakAciklamasi || undefined,
-        teslim_tarihi: normalizeDate(teslimTarihi) || undefined,
+        teslim_tarihi: delivery || undefined,
         ambar_bilgisi: ambarBilgisi || undefined,
         odeme_tipi: odemeTipi,
+        vade_gun: odemeTipi === "VADELI" ? Number(termDays) : undefined,
+        expected_total: genelToplam(),
         items: items.map((i) => ({
           product_id: i.product_id,
           koli_adedi: i.koli_adedi,
+          adet: i.adet,
+          siparis_birimi: i.siparis_birimi,
+          birim_miktari: i.birim_miktari,
           iskonto_1: i.iskonto_1,
           iskonto_2: i.iskonto_2,
           iskonto_3: i.iskonto_3,
         })),
-      });
+      };
+      const signature = JSON.stringify(payload);
+      if (retry.current.signature !== signature) retry.current = {signature, key: Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)+'_'+Math.random().toString(36).slice(2)};
+      const result = await createOrder({...payload, request_id:retry.current.key});
       clearCart();
       Alert.alert('Sipariş Kaydedildi', `Sipariş No: ${result.siparis_no}`, [
-        { text: 'Tamam', onPress: () => navigation.navigate('MainTabs') },
+        { text: 'Tamam', onPress: () => navigation.popToTop() },
       ]);
     } catch (e: any) {
       Alert.alert('Hata', e.message || 'Sipariş kaydedilemedi.');
     } finally {
+      inFlight.current = false;
       setSaving(false);
     }
   };
@@ -91,6 +110,9 @@ export default function SiparisFormuScreen({ navigation }: any) {
             </TouchableOpacity>
           </View>
 
+          {odemeTipi === 'VADELI' && <LabeledInput label="Vade (gün)" value={termDays} onChangeText={setTermDays} keyboardType="number-pad" />}
+          <TouchableOpacity disabled={saving} onPress={async () => {try {await refreshPrices(); Alert.alert('Sepet güncellendi','Güncel toplamı kontrol edip siparişi kaydedin.');} catch(e:any){Alert.alert('Güncellenemedi',e.message);}}}><Text>Fiyatları ve Stoğu Güncelle</Text></TouchableOpacity>
+          <Text>Genel Toplam (KDV dahil): {genelToplam().toFixed(2)} TL</Text>
           <View style={styles.footer}>
             <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
               {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Siparişi Kaydet</Text>}
@@ -103,13 +125,6 @@ export default function SiparisFormuScreen({ navigation }: any) {
       </ScrollView>
     </KeyboardAvoidingView>
   );
-}
-
-function normalizeDate(input: string): string | null {
-  // gg.aa.yyyy -> yyyy-mm-dd
-  const match = input.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
-  if (!match) return null;
-  return `${match[3]}-${match[2]}-${match[1]}`;
 }
 
 function LabeledInput({ label, ...rest }: any) {
@@ -166,3 +181,5 @@ const styles = StyleSheet.create({
   cancelBtn: { paddingVertical: 10, alignItems: 'center' },
   cancelBtnText: { color: colors.textMuted, fontWeight: '600', fontSize: fontSize.base },
 });
+
+import { Alert } from '../services/dialogs';
